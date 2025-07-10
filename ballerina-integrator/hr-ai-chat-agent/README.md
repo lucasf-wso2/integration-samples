@@ -4,11 +4,11 @@
 
 This AI-powered chat agent provides assistance with HR-related inquiries by referencing company-specific HR policies. It ensures employees can easily access relevant policy information in a conversational manner. 
 
-This implementation utilizes Pinecone as the vector database and OpenAI for embeddings model. Data is processed and ingested into the vector store using Devant’s RAG data ingestion feature, which streamlines the management and structuring of unstructured documents for Retrieval-Augmented Generation (RAG).
+This implementation utilizes Pinecone as the vector database and MistralAI for embeddings and chat completion. Data is processed and ingested into the vector store using Devant's RAG data ingestion feature, which streamlines the management and structuring of unstructured documents for Retrieval-Augmented Generation (RAG).
 
 ## Usage Instructions
 
-To integrate your company's HR policies, simply use Devant’s ingestion tools to feed them into the Pinecone vector store.
+To integrate your company's HR policies, simply use Devant's ingestion tools to feed them into the Pinecone vector store.
 
 ## Ingest HR Policies data to the vector store
 
@@ -27,10 +27,10 @@ Large Language Models (LLMs) process contextual information as numerical vectors
 
 ### Step 2: Configure the Embedding Model
 
-1. Select `text-embedding-ada-002` from the OpenAI embedding model dropdown.
+1. Select `MistralAI` embedding model from the dropdown.
 
 2. Enter the API key in the `Embedding Model API Key` field.
-    To generate an API key, follow the steps in the [OpenAI Platform documentation](https://platform.openai.com/docs/guides/embeddings).
+    To generate an API key, follow the steps in the [MistralAI Platform documentation](https://docs.mistral.ai/getting-started/).
 
 3. Click Next.
 
@@ -55,5 +55,5 @@ Next, upload your source files (e.g., PDFs, CSVs, or text documents) for process
 ## Deploy the chat agent in Devant
 
 1. Deploy this integration in Devant as an AI Agent.
-2. After deployment, set up the configuration by adding the OpenAI embedding token as `OPENAI_TOKEN`, the Pinecone API key as `PINECONE_API_KEY`, and the Pinecone collection URL as `PINECONE_URL`.
+2. After deployment, set up the configuration by adding the MistralAI token as `MISTRAL_TOKEN`, the Pinecone API key as `PINECONE_API_KEY`, the Pinecone collection URL as `PINECONE_URL`, and the MistralAI model name as `MISTRAL_MODEL`.
 3. Start interacting with the AI chat Agent through the chat interface.

@@ -1,24 +1,21 @@
-import ballerinax/openai.chat;
-import ballerinax/openai.embeddings;
+import ballerina/http;
 import ballerinax/pinecone.vector;
 
-embeddings:Client embeddingsClient = check new ({
+final http:Client mistralEmbeddingsClient = check new ("https://api.mistral.ai", {
     auth: {
-        token: OPENAI_TOKEN
+        token: MISTRAL_TOKEN
+    }
+});
+
+final http:Client mistralChatClient = check new ("https://api.mistral.ai", {
+    auth: {
+        token: MISTRAL_TOKEN
     }
 });
 
 final vector:Client pineconeVectorClient = check new ({
     apiKey: PINECONE_API_KEY
 }, serviceUrl = PINECONE_URL);
-
-final chat:Client openAIChat = check new({
-    auth: {
-        token: OPENAI_TOKEN
-    }
-});
-
-final string embedding = "text-embed";
 
 vector:QueryRequest queryRequest = {
     topK: 4,
@@ -29,12 +26,50 @@ public type Metadata record {
     string text;
 };
 
-public type ChatResponseChoice record {|
-    chat:ChatCompletionResponseMessage message?;
-    int index?;
-    string finish_reason?;
-    anydata...;
-|};
+public type MistralEmbeddingRequest record {
+    string model;
+    string[] input;
+};
+
+public type MistralEmbeddingData record {
+    float[] embedding;
+    int index;
+    string 'object;
+};
+
+public type MistralEmbeddingResponse record {
+    string 'object;
+    MistralEmbeddingData[] data;
+    string model;
+    record {} usage;
+};
+
+public type MistralChatMessage record {
+    string role;
+    string content;
+};
+
+public type MistralChatRequest record {
+    string model;
+    MistralChatMessage[] messages;
+    decimal temperature?;
+    int max_tokens?;
+};
+
+public type MistralChatChoice record {
+    int index;
+    MistralChatMessage message;
+    string finish_reason;
+};
+
+public type MistralChatResponse record {
+    string id;
+    string 'object;
+    int created;
+    string model;
+    MistralChatChoice[] choices;
+    record {} usage;
+};
 
 function llmChat(string query) returns string|error {
     float[] embeddingsFloat = check getEmbeddings(query);
@@ -46,13 +81,13 @@ function llmChat(string query) returns string|error {
 }
 
 function getEmbeddings(string query) returns float[]|error {
-    embeddings:CreateEmbeddingRequest req = {
-        model: "text-embedding-ada-002",
-        input: query
+    MistralEmbeddingRequest embeddingRequest = {
+        model: "mistral-embed",
+        input: [query]
     };
-    embeddings:CreateEmbeddingResponse embeddingsResult = check embeddingsClient->/embeddings.post(req);
 
-    float[] embeddings = embeddingsResult.data[0].embedding;
+    MistralEmbeddingResponse embeddingResponse = check mistralEmbeddingsClient->/v1/embeddings.post(embeddingRequest);
+    float[] embeddings = embeddingResponse.data[0].embedding;
     return embeddings;
 }
 
@@ -79,26 +114,23 @@ isolated function generateText(string query, string context) returns string|erro
         based on company HR policies.Your responses must be clear and strictly based on the provided context.
         ${context}`;
 
-    chat:CreateChatCompletionRequest request = {
-        model: "gpt-4o-mini",
-        messages: [{
-            "role": "system",
-            "content": systemPrompt
-        },
-        {
-            "role": "user",
-            "content": query
-        }
-        ]
+    MistralChatRequest chatRequest = {
+        model: "Codestral",
+        messages: [
+            {
+                role: "system",
+                content: systemPrompt
+            },
+            {
+                role: "user",
+                content: query
+            }
+        ],
+        temperature: 0.7,
+        max_tokens: 1000
     };
 
-    chat:CreateChatCompletionResponse chatResult = 
-        check openAIChat->/chat/completions.post(request);
-    ChatResponseChoice[] choices = check chatResult.choices.ensureType();
-    string? chatResponse = choices[0].message?.content;
-
-    if (chatResponse == null) {
-        return error("No chat response found");
-    }
-    return chatResponse;
+    MistralChatResponse chatResponse = check mistralChatClient->/v1/chat/completions.post(chatRequest);
+    string responseContent = chatResponse.choices[0].message.content;
+    return responseContent;
 }
