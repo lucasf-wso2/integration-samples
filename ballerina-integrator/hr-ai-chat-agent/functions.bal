@@ -1,13 +1,13 @@
 import ballerina/http;
 import ballerinax/pinecone.vector;
 
-final http:Client mistralEmbeddingsClient = check new ("https://api.mistral.ai/v1", {
+final http:Client mistralEmbeddingsClient = check new ("https://api.mistral.ai", {
     auth: {
         token: MISTRAL_TOKEN
     }
 });
 
-final http:Client mistralChatClient = check new ("https://api.mistral.ai/v1", {
+final http:Client mistralChatClient = check new ("https://api.mistral.ai", {
     auth: {
         token: MISTRAL_TOKEN
     }
@@ -104,18 +104,20 @@ isolated function augment(vector:QueryMatch[] matches) returns string|error {
     string context = "";
     foreach vector:QueryMatch data in matches {
         Metadata metadata = check data.metadata.cloneWithType();
-        context = context.concat(metadata.text);
+        string metadataText = metadata.text;
+        context = context.concat(metadataText);
     }
     return context;
 }
 
 isolated function generateText(string query, string context) returns string|error {
+    string modelName = MISTRAL_MODEL.toString();
     string systemPrompt = string `You are an HR Policy Assistant that provides employees with accurate answers
-        based on company HR policies.Your responses must be clear and strictly based on the provided context.
+        based on company HR policies. Your responses must be clear and strictly based on the provided context.
         ${context}`;
 
     MistralChatRequest chatRequest = {
-        model: "Codestral",
+        model: modelName,
         messages: [
             {
                 role: "system",
@@ -133,4 +135,10 @@ isolated function generateText(string query, string context) returns string|erro
     MistralChatResponse chatResponse = check mistralChatClient->/v1/chat/completions.post(chatRequest);
     string responseContent = chatResponse.choices[0].message.content;
     return responseContent;
+}
+
+public function testPaternityLeaveQuery() returns string|error {
+    string testQuery = "how many days for paternity leave?";
+    string response = check llmChat(testQuery);
+    return response;
 }
