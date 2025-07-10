@@ -136,9 +136,3 @@ isolated function generateText(string query, string context) returns string|erro
     string responseContent = chatResponse.choices[0].message.content;
     return responseContent;
 }
-
-public function testPaternityLeaveQuery() returns string|error {
-    string testQuery = "how many days for paternity leave?";
-    string response = check llmChat(testQuery);
-    return response;
-}
