@@ -1,13 +1,13 @@
 import ballerina/http;
 import ballerinax/pinecone.vector;
 
-final http:Client mistralEmbeddingsClient = check new ("https://api.mistral.ai", {
+final http:Client mistralEmbeddingsClient = check new ("https://api.mistral.ai/v1", {
     auth: {
         token: MISTRAL_TOKEN
     }
 });
 
-final http:Client mistralChatClient = check new ("https://api.mistral.ai", {
+final http:Client mistralChatClient = check new ("https://api.mistral.ai/v1", {
     auth: {
         token: MISTRAL_TOKEN
     }
